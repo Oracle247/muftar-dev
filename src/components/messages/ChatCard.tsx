@@ -18,6 +18,7 @@ const ChatCard = ({
   lastSeen,
   unRead,
   onClick,
+
   image,
 }: ChatCardProps) => {
   return (
@@ -52,7 +53,7 @@ const ChatCard = ({
           </div>
         </div>
       </div>
-      <p className="text-sm text-[#3A54B4]">{lastSeen}</p>
+      <p className="text-sm text-[#3A54B4]">{online ? "online" : lastSeen}</p>
 
       <div
         className={`${unRead >= 1 ? "flex" : "hidden"} h-6 w-6 items-center justify-center rounded-full bg-app-blue-100 text-white`}
