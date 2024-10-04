@@ -5,11 +5,13 @@ import { useState } from "react";
 import NotificationBar from "../../../../components/NotificationBar";
 
 interface ActionModalProps {
-  usage: "delete" | "block" | "none";
+  usage: "delete" | "block" | "none" | "delete_message";
   closeModal?: (param?: any) => void;
   isOpen?: boolean;
   user?: IUser;
-  chat?: IChat;
+  chat: IChat;
+  messageId?: string;
+  refreshChat: (param: IChat) => void;
 }
 
 const ConfrimModal = ({
@@ -18,6 +20,8 @@ const ConfrimModal = ({
   isOpen,
   chat,
   user,
+  messageId,
+  refreshChat,
 }: ActionModalProps) => {
   // const [blockUser, setBlockUser] = useState(false);
 
@@ -26,11 +30,39 @@ const ConfrimModal = ({
     if (chatIndex !== -1) {
       ChatData.splice(chatIndex, 1);
     }
+    refreshChat(ChatData[0]);
+  };
+
+  // const deleteMessage = (id: string) => {
+  //   const index =
+  //     chat && chat.messages.findIndex((message) => message.id === id);
+  //   if (index && index !== -1 && chat) {
+  //     chat.messages.splice(index, 1);
+  //   }
+  //   refreshChat(chat);
+  //   console.log(chat);
+  // };
+
+  const deleteMessage = (id: string) => {
+    const messageIndex = chat.messages.findIndex(
+      (message) => message.id === id,
+    );
+
+    if (messageIndex !== -1 && chat) {
+      chat.messages.splice(messageIndex, 1);
+
+      const chatIndex = ChatData.findIndex((c) => c.id === chat.id);
+      if (chatIndex !== -1) {
+        ChatData[chatIndex] = { ...chat };
+      }
+
+      refreshChat({ ...chat });
+    }
   };
 
   return (
     <div>
-      {usage !== "none" && (
+      {usage !== "none" && usage !== "delete_message" && (
         <Modal
           isOpen={isOpen}
           className="flex items-center justify-center"
@@ -145,6 +177,51 @@ const ConfrimModal = ({
         title=""
         message="user blocked sucessfully"
       /> */}
+
+      {usage !== "none" && usage === "delete_message" && (
+        <Modal
+          isOpen={isOpen}
+          className="flex items-center justify-center"
+          closeModal={() => closeModal && closeModal("none")}
+        >
+          <div className="flex w-full max-w-[28rem] flex-col gap-2 rounded-2xl bg-white p-4 pb-6">
+            {/* modal tittle */}
+            <div className="flex w-full flex-col items-center justify-center">
+              <p className="m-auto text-center text-sm text-black">
+                You're about to delete this message
+              </p>
+              <p className="m-auto text-center text-xs text-gray-400">
+                click on Go back to cancel this action or click on delete to
+                proceed
+              </p>
+            </div>
+
+            {/* modal confimmation */}
+            <div className="flex w-full gap-2">
+              <button
+                onClick={() => closeModal && closeModal("none")}
+                className="ceholder w-full rounded-md border px-1 py-1 text-xs text-black"
+              >
+                Cancel
+              </button>
+
+              <button
+                // onClick={() => deleteConversation(chat?.id ?? 0)}
+                className="w-full rounded-md border border-red-100 bg-red-50 px-1 py-1 text-xs text-red-600"
+              >
+                Unsend for you
+              </button>
+
+              <button
+                onClick={() => deleteMessage(messageId ?? "")}
+                className="w-full rounded-md bg-red-500 px-1 py-1 text-xs text-white"
+              >
+                Unsend for everyone
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

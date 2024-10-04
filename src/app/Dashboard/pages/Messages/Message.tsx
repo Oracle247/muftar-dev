@@ -13,7 +13,7 @@ import { getCurrentTime } from "../../../../helpers/helperFunction";
 import { useDebounce } from "../../../../hooks/useDebounce";
 import ConfirmModal from "./ConfirmModal";
 import ContextMenu from "./ContextMenu";
-import { MenuItems } from "./Items";
+import { getMenuItems } from "./Items";
 
 const Message = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,7 +32,7 @@ const Message = () => {
   const [showActionModal, setShowActionModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmModalUsage, setConfirmModalUsage] = useState<
-    "delete" | "block" | "none"
+    "delete" | "block" | "none" | "delete_message"
   >("none");
 
   const [contextMenu, setContextMenu] = useState<{
@@ -93,7 +93,7 @@ const Message = () => {
   useEffect(() => {
     const resent = ChatData.some((data) => data.recent == true);
     setIsRecent(resent);
-    setCurrentChat(ChatData[0]);
+    // setCurrentChat(ChatData[0]);
     console.log(ChatData);
   }, [ChatData]);
 
@@ -140,7 +140,9 @@ const Message = () => {
     setShowActionModal(!showActionModal);
   };
 
-  const showConfirmModalHandler = (usage: "delete" | "block") => {
+  const showConfirmModalHandler = (
+    usage: "delete" | "block" | "delete_message",
+  ) => {
     setShowConfirmModal(!showConfirmModal);
     setConfirmModalUsage(usage);
     setShowActionModal(false);
@@ -192,6 +194,18 @@ const Message = () => {
     setCurrentChat(chat);
   };
 
+  const MenuItems = getMenuItems(() =>
+    showConfirmModalHandler("delete_message"),
+  );
+
+  const refreshChat = (updatedChat: IChat) => {
+    const chatIndex = ChatData.findIndex((chat) => chat.id === updatedChat.id);
+    if (chatIndex !== -1) {
+      ChatData[chatIndex] = updatedChat;
+      setCurrentChat(updatedChat);
+    }
+  };
+
   return (
     <div className="flex h-[90vh] items-center justify-center overflow-y-hidden bg-white px-4 pb-4 md:px-16">
       <ConfirmModal
@@ -200,6 +214,8 @@ const Message = () => {
         chat={currentChat}
         user={getNonGroupChatParticipant(currentChat)}
         usage={confirmModalUsage}
+        messageId={selectedMessage as string}
+        refreshChat={refreshChat}
       />
 
       <Modal isOpen={isModalOpen} className="flex items-center justify-center">

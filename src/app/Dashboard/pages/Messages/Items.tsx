@@ -1,6 +1,6 @@
 import { IMenuItem } from "./ContextMenu";
 
-export const MenuItems: IMenuItem[] = [
+export const getMenuItems = (deleteHandler: () => void): IMenuItem[] => [
   {
     label: "Reply",
     onClick: () => console.log("clicked"),
@@ -67,7 +67,7 @@ export const MenuItems: IMenuItem[] = [
   },
   {
     label: "Delete",
-    onClick: () => console.log("clicked"),
+    onClick: deleteHandler,
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
