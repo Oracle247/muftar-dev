@@ -1,6 +1,6 @@
 import ChatCard from "../../../../components/messages/ChatCard";
 import ImageComp from "../../../../components/Image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReceiveMessage from "../../../../components/messages/ReceiveMessage";
 import SentMessage from "../../../../components/messages/SentMessage";
 import SentImage from "../../../../components/messages/SentImage";
@@ -12,6 +12,8 @@ import ReceiveImage from "../../../../components/messages/ReceiveImage";
 import { getCurrentTime } from "../../../../helpers/helperFunction";
 import { useDebounce } from "../../../../hooks/useDebounce";
 import ConfirmModal from "./ConfirmModal";
+import ContextMenu from "./ContextMenu";
+import { MenuItems } from "./Items";
 
 const Message = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,6 +34,49 @@ const Message = () => {
   const [confirmModalUsage, setConfirmModalUsage] = useState<
     "delete" | "block" | "none"
   >("none");
+
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
+
+  const handleContextMenu = (
+    event: React.MouseEvent<HTMLDivElement>,
+    message: string,
+  ) => {
+    event.preventDefault();
+    setSelectedMessage(message);
+    setContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+    });
+  };
+
+  const handleLongPress = useCallback(
+    (event: React.TouchEvent<HTMLDivElement>, message: string) => {
+      event.preventDefault();
+      const longPressTimer = setTimeout(() => {
+        setContextMenu({
+          x: event.touches[0].clientX,
+          y: event.touches[0].clientY,
+        });
+        setSelectedMessage(message);
+      }, 500);
+
+      const clearLongPress = () => clearTimeout(longPressTimer);
+      if (event.target) {
+        event.target.addEventListener("mouseup", clearLongPress, {
+          once: true,
+        });
+        event.target.addEventListener("touchend", clearLongPress, {
+          once: true,
+        });
+      }
+    },
+    [],
+  );
 
   const debouncedMessageModalSearchTerm = useDebounce(
     messageModalSearchInput,
@@ -325,8 +370,7 @@ const Message = () => {
                   debouncedAllMessageSearchTerm.debouncedValue === "" &&
                   ChatData.map(
                     (chat) =>
-                      !chat.isGroupChat &&
-                      chat.messages.length > 0 && (
+                      !chat.isGroupChat && (
                         <div
                           key={chat.id}
                           className={
@@ -496,7 +540,7 @@ const Message = () => {
           </div>
 
           {/* Body */}
-          <div className="scroller flex w-full flex-grow flex-col space-y-4 overflow-y-auto overflow-x-hidden border-l border-t border-[#D0D5DD] bg-white px-4 py-6 xl:px-6">
+          <div className="scroller relative flex w-full flex-grow flex-col space-y-4 overflow-y-auto overflow-x-hidden border-l border-t border-[#D0D5DD] bg-white px-4 py-6 xl:px-6">
             <div className="flex justify-center">
               <div className="flex max-w-[202px] flex-col items-center gap-2 p-3">
                 <ImageComp
@@ -514,7 +558,7 @@ const Message = () => {
                 </p>
               </div>
             </div>
-            {currentChat.messages
+            {/* {currentChat.messages
               .sort((a, b) => {
                 const timeA = new Date(
                   `1970-01-01T${a.timestamp}:00`,
@@ -526,6 +570,7 @@ const Message = () => {
                 return timeA - timeB;
               })
               .map((message) =>
+                
                 message.senderId !== currentUserId ? (
                   message.media ? (
                     <ReceiveImage
@@ -556,7 +601,61 @@ const Message = () => {
                     time={message.timestamp}
                   />
                 ),
-              )}
+              )} */}
+            {currentChat.messages
+              .sort((a, b) => {
+                const timeA = new Date(
+                  `1970-01-01T${a.timestamp}:00`,
+                ).getTime();
+                const timeB = new Date(
+                  `1970-01-01T${b.timestamp}:00`,
+                ).getTime();
+                return timeA - timeB;
+              })
+              .map((message) => (
+                <div
+                  key={message.id}
+                  onContextMenu={(e) => handleContextMenu(e, message.id)}
+                  onTouchStart={(e) => handleLongPress(e, message.id)}
+                  className={`message-item relative ${message.senderId !== currentUserId ? "received" : "sent"}`}
+                >
+                  {message.senderId !== currentUserId ? (
+                    message.media ? (
+                      <ReceiveImage
+                        media={message.media}
+                        time={message.timestamp}
+                        message={message.text}
+                      />
+                    ) : (
+                      <ReceiveMessage
+                        message={message.text}
+                        time={message.timestamp}
+                      />
+                    )
+                  ) : message.media ? (
+                    <SentImage
+                      media={message.media}
+                      time={message.timestamp}
+                      message={message.text}
+                    />
+                  ) : (
+                    <SentMessage
+                      seen={message.status === "seen"}
+                      message={message.text}
+                      time={message.timestamp}
+                    />
+                  )}
+                </div>
+              ))}
+
+            {contextMenu && (
+              <ContextMenu
+                x={contextMenu.x}
+                y={contextMenu.y}
+                onClose={() => setContextMenu(null)}
+                menuItems={MenuItems}
+              />
+            )}
 
             {/* <ChatDate date="FEB 01, 2024 AT 21:22" /> */}
           </div>

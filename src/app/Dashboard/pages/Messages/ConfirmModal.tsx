@@ -19,7 +19,7 @@ const ConfrimModal = ({
   chat,
   user,
 }: ActionModalProps) => {
-  const [blockUser, setBlockUser] = useState(false);
+  // const [blockUser, setBlockUser] = useState(false);
 
   const deleteConversation = (chatId: number) => {
     const chatIndex = ChatData.findIndex((chat) => chat.id === chatId);
